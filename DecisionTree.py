@@ -27,7 +27,10 @@ def split(data, attr):
             classes[sorted_data[i][attr]].append(sorted_data[i])
         else:
             classes[sorted_data[i][attr]] = [sorted_data[i]]
-    print(classes)
+    gini_index = 0
+    for key in classes:
+        gini_index += n / len(classes[key]) * gini(classes[key])
+    return gini_index
 
 train_path = sys.argv[1]
 test_path = sys.argv[2]
@@ -64,7 +67,7 @@ while line is not "":
 
 test_f.close()
 
-print(gini(data))
+# TRAIN
 
 for i in range(num_attributes):
-    split(test_data, i + 1)
+    gini_index = split(test_data, i + 1)
