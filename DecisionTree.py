@@ -34,3 +34,23 @@ while line is not "":
     line = test_f.readline()
 
 test_f.close()
+
+def gini(data):
+    n = len(data)
+    num_classes = {}
+    for i in range(n):
+        _class = data[i][0]
+        if _class in num_classes:
+            num_classes[_class] += 1
+        else:
+            num_classes[_class] = 1
+
+    gini_index = 1
+
+    for _class in num_classes:
+        gini_index -= (num_classes[_class] / n) ** 2
+
+    return gini_index
+
+
+print(gini(data))
