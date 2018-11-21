@@ -1,4 +1,33 @@
 import sys
+import node
+
+def gini(data):
+    n = len(data)
+    num_classes = {}
+    for i in range(n):
+        _class = data[i][0]
+        if _class in num_classes:
+            num_classes[_class] += 1
+        else:
+            num_classes[_class] = 1
+
+    gini_index = 1
+
+    for _class in num_classes:
+        gini_index -= (num_classes[_class] / n) ** 2
+
+    return gini_index
+
+def split(data, attr):
+    sorted_data = sorted(data, key=lambda x: x[attr])
+    classes = {}
+    n = len(data)
+    for i in range(n):
+        if sorted_data[i][attr] in classes:
+            classes[sorted_data[i][attr]].append(sorted_data[i])
+        else:
+            classes[sorted_data[i][attr]] = [sorted_data[i]]
+    print(classes)
 
 train_path = sys.argv[1]
 test_path = sys.argv[2]
@@ -35,22 +64,7 @@ while line is not "":
 
 test_f.close()
 
-def gini(data):
-    n = len(data)
-    num_classes = {}
-    for i in range(n):
-        _class = data[i][0]
-        if _class in num_classes:
-            num_classes[_class] += 1
-        else:
-            num_classes[_class] = 1
-
-    gini_index = 1
-
-    for _class in num_classes:
-        gini_index -= (num_classes[_class] / n) ** 2
-
-    return gini_index
-
-
 print(gini(data))
+
+for i in range(num_attributes):
+    split(test_data, i + 1)
