@@ -13,7 +13,6 @@ def gini_index(groups, classes):
 				p = [row[0] for row in group].count(class_val) / size
 				score += p ** 2
 			gini += (1.0 - score) * (size / n)
-
 	return gini
 
 def test_split(index, value, data):
@@ -29,7 +28,7 @@ def get_split(data):
 	class_values = list(set(row[0] for row in data))
 	b_index, b_value, b_score, b_groups = sys.maxsize, sys.maxsize, sys.maxsize, None
 	for index in range(1, len(data[0])):
-		for row in data:
+		for row in data:	# modify. Too long 
 			groups = test_split(index, row[index], data)
 			gini = gini_index(groups, class_values)
 			if gini < b_score:
@@ -125,6 +124,7 @@ test_f.close()
 
 depth = len(test_data[0]) - 1
 size = int(len(test_data) / depth)
+# size = 150
 
 classes = list(set(row[0] for row in data))
 classes.sort()
@@ -137,7 +137,6 @@ tree = build_tree(test_data, depth, size)
 
 for row in test_data:
 	prediction = predict(tree, row)
-	print(row[0], prediction)
 	confusion_matrix[int(row[0]) - 1][int(prediction) - 1] += 1
 
 print_matrix(confusion_matrix)
