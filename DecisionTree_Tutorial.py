@@ -1,9 +1,7 @@
 import sys
 
 def gini_index(groups, classes):
-	n = 0.0
-	for group in groups:
-		n += len(group)
+	n = float(sum([len(group) for group in groups]))
 
 	gini = 0.0
 
@@ -29,7 +27,7 @@ def test_split(index, value, data):
 
 def get_split(data):
 	class_values = list(set(row[0] for row in data))
-	b_index, b_value, b_score, b_groups = 9999, 9999, 9999, None
+	b_index, b_value, b_score, b_groups = sys.maxsize, sys.maxsize, sys.maxsize, None
 	for index in range(1, len(data[0])):
 		for row in data:
 			groups = test_split(index, row[index], data)
@@ -81,6 +79,15 @@ def predict(node, row):
 	else:
 		return node[direction]
 
+def print_matrix(matrix):
+	k = len(matrix)
+	for i in range(k):
+		line = ""
+		for j in range(k):
+			line += str(matrix[i][j]) + " "
+		line.rstrip()
+		print(line)
+
 train_path = sys.argv[1]
 test_path = sys.argv[2]
 
@@ -116,17 +123,21 @@ while line is not "":
 
 test_f.close()
 
-max_depth = len(test_data[0]) - 1
-min_size = int(len(test_data) / max_depth)
+depth = len(test_data[0]) - 1
+size = int(len(test_data) / depth)
 
-tree = build_tree(test_data, max_depth, min_size)
-n_right = 0
-n_wrong = 0
+classes = list(set(row[0] for row in data))
+classes.sort()
+
+n_classes = len(classes)
+
+confusion_matrix = [[0 for i in range(n_classes)] for j in range(n_classes)]
+
+tree = build_tree(test_data, depth, size)
+
 for row in test_data:
 	prediction = predict(tree, row)
-	if row[0] == prediction:
-		n_right += 1
-	else:
-		n_wrong += 1
+	print(row[0], prediction)
+	confusion_matrix[int(row[0]) - 1][int(prediction) - 1] += 1
 
-print(n_right, n_wrong)
+print_matrix(confusion_matrix)
