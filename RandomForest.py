@@ -52,7 +52,7 @@ num_trees = min(depth, 11)
 if num_trees % 2 == 0:
     num_trees += 1
 
-classes = list(set(row[0] for row in data))
+classes = list(set(data_point[0] for data_point in train_data))
 classes.sort()
 
 n_classes = len(classes)
@@ -67,12 +67,13 @@ for i in range(num_trees):
     tree = DecisionTree.build_tree(data_samples[i], depth, size)
     trees.append(tree)
 
-for row in test_data:
+for data_point in test_data:
     predictions = []
     for i in range(num_trees):
-        prediction = DecisionTree.predict(trees[i], row)
+        prediction = DecisionTree.predict(trees[i], data_point)
         predictions.append(prediction)
     prediction = max(set(predictions), key=predictions.count)
-    confusion_matrix[int(row[0]) - 1][int(prediction) - 1] += 1
+    confusion_matrix[int(data_point[0]) - 1][int(prediction) - 1] += 1
 
 DecisionTree.print_matrix(confusion_matrix)
+DecisionTree.F_1(confusion_matrix)

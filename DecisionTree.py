@@ -95,6 +95,21 @@ def print_matrix(matrix):
         line.rstrip()
         print(line)
 
+
+def F_1(matrix):
+    k = len(matrix)
+    row_sum = [sum(x) for x in matrix]
+    col_sum = [sum(x) for x in zip(*matrix)]
+    for i in range(k):
+        if matrix[i][i] == 0 or col_sum[i] == 0 or row_sum == 0:
+            print(str(i + 1) + ": " + "NaN")
+        else:
+            tp = matrix[i][i]
+            p = tp / col_sum[i]
+            r = tp / row_sum[i]
+            f = 2 * p * r / (p + r)
+            print(str(i + 1) + ": " + str(f))
+
 train_path = sys.argv[1]
 test_path = sys.argv[2]
 
@@ -133,7 +148,7 @@ test_f.close()
 depth = len(test_data[0]) - 1
 size = int(len(test_data) / depth)
 
-classes = list(set(data_point[0] for data_point in data))
+classes = list(set(data_point[0] for data_point in train_data))
 classes.sort()
 
 n_classes = len(classes)
@@ -148,3 +163,5 @@ for data_point in test_data:
 
 if sys.argv[0] == "DecisionTree.py":
     print_matrix(confusion_matrix)
+    print()
+    F_1(confusion_matrix)
