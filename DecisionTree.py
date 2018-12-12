@@ -1,36 +1,100 @@
 import sys
-import node
 
-def gini(data):
-	n = len(data)
-	num_classes = {}
-	for i in range(n):
-		_class = data[i][0]
-		if _class in num_classes:
-			num_classes[_class] += 1
-		else:
-			num_classes[_class] = 1
+def gini_index(groups, classes):
+    n = float(sum([len(group) for group in groups]))
 
-	gini_index = 1
+    gini = 0.0
 
-	for _class in num_classes:
-		gini_index -= (num_classes[_class] / n) ** 2
+    for group in groups:
+        size = len(group)
+        if size != 0:
+            score = 0.0
+            for class_val in classes:
+                p = [row[0] for row in group].count(class_val) / size
+                score += p ** 2
+            gini += (1.0 - score) * (size / n)
+    return gini
 
-	return gini_index
+def test_split(index, value, data):
+    left = list()
+    right = list()
+    for row in data:
+        if row[index] < value:
+            left.append(row)
+        else:
+            right.append(row)
+    return left, right
 
-def split(data, attr):
-	sorted_data = sorted(data, key=lambda x: x[attr])
-	classes = {}
-	n = len(data)
-	for i in range(n):
-		if sorted_data[i][attr] in classes:
-			classes[sorted_data[i][attr]].append(sorted_data[i])
-		else:
-			classes[sorted_data[i][attr]] = [sorted_data[i]]
-	gini_index = 0
-	for key in classes:
-		gini_index += n / len(classes[key]) * gini(classes[key])
-	return gini_index
+def get_split(data):
+    class_values = list(set(row[0] for row in data))
+    m_index = sys.maxsize
+    m_value = sys.maxsize
+    m_score = sys.maxsize
+    m_groups = None
+    for index in range(1, len(data[0])):
+        attr_values = list(set(row[index] for row in data))
+        for val in attr_values:
+            groups = test_split(index, val, data)
+            gini = gini_index(groups, class_values)
+            if gini < m_score:
+                m_index = index
+                m_value = val
+                m_score = gini
+                m_groups = groups
+    return {'index': m_index, 'value': m_value, 'groups': m_groups}
+
+def terminal_node(group):
+    outcomes = [row[0] for row in group]
+    return max(set(outcomes), key=outcomes.count)
+
+def split(node, max_depth, min_size, depth):
+    left, right = node['groups']
+    del(node['groups'])
+
+    if len(left) == 0 or len(right) == 0:
+        node['left'] = node['right'] = terminal_node(left + right)
+
+    if depth >= max_depth:
+        node['left'], node['right'] = terminal_node(left), terminal_node(right)
+
+    if len(left) != 0 and len(right) != 0:
+        if len(left) <= min_size and len(left):
+            node['left'] = terminal_node(left)
+        else:
+            node['left'] = get_split(left)
+            split(node['left'], max_depth, min_size, depth + 1)
+
+        if len(right) <= min_size and len(right):
+            node['right'] = terminal_node(right)
+        else:
+            node['right'] = get_split(right)
+            split(node['right'], max_depth, min_size, depth + 1)
+
+def build_tree(data, max_depth, min_size):
+    root = get_split(data)
+    split(root, max_depth, min_size, 1)
+    return root
+
+def predict(node, row):
+    direction = ''
+    if row[node['index']] < node['value']:
+        direction = 'left'
+    else:
+        direction = 'right'
+
+    if isinstance(node[direction], dict):
+        return predict(node[direction], row)
+    else:
+        return node[direction]
+
+def print_matrix(matrix):
+    k = len(matrix)
+    for i in range(k):
+        line = ""
+        for j in range(k):
+            line += str(matrix[i][j]) + " "
+        line.rstrip()
+        print(line)
 
 train_path = sys.argv[1]
 test_path = sys.argv[2]
@@ -44,11 +108,11 @@ line = train_f.readline()
 num_attributes = len(line.split(" ")) - 1
 
 while line is not "":
-	data = line.rstrip().split(" ")
-	for i in range(1, num_attributes + 1):
-		data[i] = data[i].split(":")[1]
-	train_data.append(data)
-	line = train_f.readline()
+    data = line.rstrip().split(" ")
+    for i in range(1, num_attributes + 1):
+        data[i] = data[i].split(":")[1]
+    train_data.append(data)
+    line = train_f.readline()
 
 train_f.close()
 
@@ -59,15 +123,28 @@ test_f = open(test_path, 'r')
 line = test_f.readline()
 
 while line is not "":
-	data = line.rstrip().split(" ")
-	for i in range(1, num_attributes + 1):
-		data[i] = data[i].split(":")[1]
-	test_data.append(data)
-	line = test_f.readline()
+    data = line.rstrip().split(" ")
+    for i in range(1, num_attributes + 1):
+        data[i] = data[i].split(":")[1]
+    test_data.append(data)
+    line = test_f.readline()
 
 test_f.close()
 
-# TRAIN
+depth = len(test_data[0]) - 1
+size = int(len(test_data) / depth)
 
-for i in range(num_attributes):
-	gini_index = split(test_data, i + 1)
+classes = list(set(row[0] for row in data))
+classes.sort()
+
+n_classes = len(classes)
+
+confusion_matrix = [[0 for i in range(n_classes)] for j in range(n_classes)]
+
+tree = build_tree(test_data, depth, size)
+
+for row in test_data:
+    prediction = predict(tree, row)
+    confusion_matrix[int(row[0]) - 1][int(prediction) - 1] += 1
+
+print_matrix(confusion_matrix)
