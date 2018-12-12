@@ -147,4 +147,5 @@ for row in test_data:
     prediction = predict(tree, row)
     confusion_matrix[int(row[0]) - 1][int(prediction) - 1] += 1
 
-print_matrix(confusion_matrix)
+if sys.argv[0] == "DecisionTree.py":
+    print_matrix(confusion_matrix)

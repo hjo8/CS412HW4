@@ -1,8 +1,13 @@
 import sys
 import DecisionTree
+from random import choices
 
-def split_data(data, num_split):
-
+def split_data(data, num_split, num_samples):
+    splits = []
+    for i in range(num_split):
+        split = choices(data, k = num_samples)
+        splits.append(split)
+    return splits
 
 train_path = sys.argv[1]
 test_path = sys.argv[2]
@@ -41,7 +46,7 @@ test_f.close()
 
 depth = len(test_data[0]) - 1
 size = int(len(test_data) / depth)
-num_trees = depth
+num_trees = 3
 
 classes = list(set(row[0] for row in data))
 classes.sort()
@@ -51,9 +56,19 @@ n_classes = len(classes)
 confusion_matrix = [[0 for i in range(n_classes)] for j in range(n_classes)]
 
 trees = []
+num_samples = int(len(train_data) * 0.5)
+data_samples = split_data(train_data, num_trees, num_samples)
 
-tree = build_tree(test_data, depth, size)
+for i in range(num_trees):
+    tree = DecisionTree.build_tree(data_samples[i], depth, size)
+    trees.append(tree)
 
 for row in test_data:
-    prediction = predict(tree, row)
+    predictions = []
+    for i in range(num_trees):
+        prediction = DecisionTree.predict(trees[i], row)
+        predictions.append(prediction)
+    prediction = max(set(predictions), key=predictions.count)
     confusion_matrix[int(row[0]) - 1][int(prediction) - 1] += 1
+
+DecisionTree.print_matrix(confusion_matrix)
