@@ -53,11 +53,10 @@ def split(node, max_depth, min_size, depth):
 
     if len(left) == 0 or len(right) == 0:
         node['left'] = node['right'] = terminal_node(left + right)
+    else:
+        if depth >= max_depth:
+            node['left'], node['right'] = terminal_node(left), terminal_node(right)
 
-    if depth >= max_depth:
-        node['left'], node['right'] = terminal_node(left), terminal_node(right)
-
-    if len(left) != 0 and len(right) != 0:
         if len(left) <= min_size and len(left):
             node['left'] = terminal_node(left)
         else:

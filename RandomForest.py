@@ -48,7 +48,9 @@ test_f.close()
 
 depth = len(test_data[0]) - 1
 size = int(len(test_data) / depth)
-num_trees = 5
+num_trees = min(depth, 11)
+if num_trees % 2 == 0:
+    num_trees += 1
 
 classes = list(set(row[0] for row in data))
 classes.sort()
@@ -58,7 +60,7 @@ n_classes = len(classes)
 confusion_matrix = [[0 for i in range(n_classes)] for j in range(n_classes)]
 
 trees = []
-num_samples = int(len(train_data) * 0.5)
+num_samples = int(len(train_data) * 0.8)
 data_samples = split_data(train_data, num_trees, num_samples)
 
 for i in range(num_trees):
