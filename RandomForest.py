@@ -1,11 +1,13 @@
 import sys
 import DecisionTree
-from random import choices
+from random import choice
 
 def split_data(data, num_split, num_samples):
     splits = []
     for i in range(num_split):
-        split = choices(data, k = num_samples)
+        split = []
+        for j in range(num_samples):
+            split.append(choice(data))
         splits.append(split)
     return splits
 
@@ -46,7 +48,7 @@ test_f.close()
 
 depth = len(test_data[0]) - 1
 size = int(len(test_data) / depth)
-num_trees = 3
+num_trees = 5
 
 classes = list(set(row[0] for row in data))
 classes.sort()
