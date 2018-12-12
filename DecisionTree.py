@@ -1,7 +1,7 @@
 import sys
 
 def gini_index(groups, classes):
-    n = float(sum([len(group) for group in groups]))
+    n = sum([len(group) for group in groups])
 
     gini = 0.0
 
@@ -10,31 +10,31 @@ def gini_index(groups, classes):
         if size != 0:
             score = 0.0
             for class_val in classes:
-                p = [row[0] for row in group].count(class_val) / size
+                p = [data_point[0] for data_point in group].count(class_val) / size
                 score += p ** 2
             gini += (1.0 - score) * (size / n)
     return gini
 
-def test_split(index, value, data):
-    left = list()
-    right = list()
-    for row in data:
-        if row[index] < value:
-            left.append(row)
+def split_on_value(index, value, data):
+    L = list()
+    R = list()
+    for data_point in data:
+        if data_point[index] < value:
+            L.append(data_point)
         else:
-            right.append(row)
-    return left, right
+            R.append(data_point)
+    return L, R
 
-def get_split(data):
-    class_values = list(set(row[0] for row in data))
+def split_node(data):
+    class_values = list(set(data_point[0] for data_point in data))
     m_index = sys.maxsize
     m_value = sys.maxsize
     m_score = sys.maxsize
     m_groups = None
     for index in range(1, len(data[0])):
-        attr_values = list(set(row[index] for row in data))
+        attr_values = list(set(data_point[index] for data_point in data))
         for val in attr_values:
-            groups = test_split(index, val, data)
+            groups = split_on_value(index, val, data)
             gini = gini_index(groups, class_values)
             if gini < m_score:
                 m_index = index
@@ -43,46 +43,46 @@ def get_split(data):
                 m_groups = groups
     return {'index': m_index, 'value': m_value, 'groups': m_groups}
 
-def terminal_node(group):
-    outcomes = [row[0] for row in group]
+def terminal(group):
+    outcomes = [data_point[0] for data_point in group]
     return max(set(outcomes), key=outcomes.count)
 
 def split(node, max_depth, min_size, depth):
-    left, right = node['groups']
+    L, R = node['groups']
     del(node['groups'])
 
-    if len(left) == 0 or len(right) == 0:
-        node['left'] = node['right'] = terminal_node(left + right)
+    if len(L) == 0 or len(R) == 0:
+        node['L'] = node['R'] = terminal(L + R)
     else:
         if depth >= max_depth:
-            node['left'], node['right'] = terminal_node(left), terminal_node(right)
+            node['L'], node['R'] = terminal(L), terminal(R)
 
-        if len(left) <= min_size and len(left):
-            node['left'] = terminal_node(left)
+        if len(L) <= min_size and len(L):
+            node['L'] = terminal(L)
         else:
-            node['left'] = get_split(left)
-            split(node['left'], max_depth, min_size, depth + 1)
+            node['L'] = split_node(L)
+            split(node['L'], max_depth, min_size, depth + 1)
 
-        if len(right) <= min_size and len(right):
-            node['right'] = terminal_node(right)
+        if len(R) <= min_size and len(R):
+            node['R'] = terminal(R)
         else:
-            node['right'] = get_split(right)
-            split(node['right'], max_depth, min_size, depth + 1)
+            node['R'] = split_node(R)
+            split(node['R'], max_depth, min_size, depth + 1)
 
 def build_tree(data, max_depth, min_size):
-    root = get_split(data)
+    root = split_node(data)
     split(root, max_depth, min_size, 1)
     return root
 
-def predict(node, row):
+def predict(node, data_point):
     direction = ''
-    if row[node['index']] < node['value']:
-        direction = 'left'
+    if data_point[node['index']] < node['value']:
+        direction = 'L'
     else:
-        direction = 'right'
+        direction = 'R'
 
     if isinstance(node[direction], dict):
-        return predict(node[direction], row)
+        return predict(node[direction], data_point)
     else:
         return node[direction]
 
@@ -133,7 +133,7 @@ test_f.close()
 depth = len(test_data[0]) - 1
 size = int(len(test_data) / depth)
 
-classes = list(set(row[0] for row in data))
+classes = list(set(data_point[0] for data_point in data))
 classes.sort()
 
 n_classes = len(classes)
@@ -142,9 +142,9 @@ confusion_matrix = [[0 for i in range(n_classes)] for j in range(n_classes)]
 
 tree = build_tree(test_data, depth, size)
 
-for row in test_data:
-    prediction = predict(tree, row)
-    confusion_matrix[int(row[0]) - 1][int(prediction) - 1] += 1
+for data_point in test_data:
+    prediction = predict(tree, data_point)
+    confusion_matrix[int(data_point[0]) - 1][int(prediction) - 1] += 1
 
 if sys.argv[0] == "DecisionTree.py":
     print_matrix(confusion_matrix)
